@@ -1,18 +1,20 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { oauthUrl } from '../../services/auth';
 
 export default function AuthForm({ mode }) {
   const isSignup = mode === 'signup';
   const { login, register } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(searchParams.get('error') || '');
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -61,6 +63,19 @@ export default function AuthForm({ mode }) {
         </div>
 
         {error && <div className="mb-4 px-4 py-2.5 rounded-lg bg-coral-bg text-coral-hover text-[13px]">{error}</div>}
+
+        <div className="flex flex-col gap-2.5 mb-5">
+          {['google', 'github'].map((p) => (
+            <a
+              key={p}
+              href={oauthUrl(p)}
+              className="w-full py-3 rounded-full text-center font-semibold text-[14.5px] border-[1.5px] border-ink/10 hover:border-ink/30 transition-colors"
+            >
+              Continue with {p === 'github' ? 'GitHub' : 'Google'}
+            </a>
+          ))}
+          <div className="text-center text-[12px] text-ink/40 font-mono">or use email</div>
+        </div>
 
         <form onSubmit={handleSubmit}>
           {isSignup && (
