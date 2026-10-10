@@ -43,6 +43,17 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
+  const loginWithToken = useCallback(async (token) => {
+  localStorage.setItem('flowengine_token', token);
+  try {
+    const me = await fetchCurrentUser();
+    setUser(me);
+    return me;
+  } catch (err) {
+    localStorage.removeItem('flowengine_token');
+    throw err;
+  }
+}, []);
   return (
     <AuthContext.Provider value={{ user, loading, login, register, logout }}>
       {children}
