@@ -1,18 +1,25 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { oauthUrl } from '../../services/auth';
+
+const OAUTH_PROVIDERS = [
+  { id: 'google', label: 'Google', logo: '/google-logo.png' },
+  { id: 'github', label: 'GitHub', logo: '/github-logo.png' },
+];
 
 export default function AuthForm({ mode }) {
   const isSignup = mode === 'signup';
   const { login, register } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(searchParams.get('error') || '');
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -34,13 +41,17 @@ export default function AuthForm({ mode }) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 min-h-screen">
-      <div className="hidden md:flex flex-col justify-center px-16 bg-gradient-to-br from-ink to-[#2b2b29] text-card">
-        <div className="font-mono text-[13px] tracking-wide text-teal opacity-90 uppercase mb-7">◆ FlowEngine</div>
-        <h2 className="font-display text-[34px] leading-tight mb-4 max-w-[380px]">Automation that survives the real world.</h2>
-        <p className="text-sage/75 max-w-[360px] leading-relaxed text-[14.5px]">
-          Durable execution, event sourcing, and replay — built into the automation engine, not bolted on.
-        </p>
-      </div>
+     
+
+<div className="hidden md:flex flex-col justify-center items-center px-16 bg-[#F4F7FF]">
+  <img
+    src="/logo-login.png"
+    alt="FlowEngine"
+    className="w-full max-w-[460px] h-auto object-contain"
+  />
+</div>
+
+
 
       <div className="flex flex-col justify-center px-8 md:px-16 max-w-[440px] mx-auto w-full">
         <div className="flex gap-1 bg-ink/[0.08] rounded-full p-1 mb-8 w-fit">
@@ -61,6 +72,20 @@ export default function AuthForm({ mode }) {
         </div>
 
         {error && <div className="mb-4 px-4 py-2.5 rounded-lg bg-coral-bg text-coral-hover text-[13px]">{error}</div>}
+
+        <div className="flex flex-col gap-2.5 mb-5">
+          {OAUTH_PROVIDERS.map(({ id, label, logo }) => (
+            <a
+              key={id}
+              href={oauthUrl(id)}
+              className="w-full py-3 rounded-full flex items-center justify-center gap-2.5 font-semibold text-[14.5px] text-ink border-[1.5px] border-ink/10 hover:border-ink/30 transition-colors"
+            >
+              <img src={logo} alt="" className="w-[18px] h-[18px] object-contain shrink-0" />
+              Continue with {label}
+            </a>
+          ))}
+          <div className="text-center text-[12px] text-ink/40 font-mono">or use email</div>
+        </div>
 
         <form onSubmit={handleSubmit}>
           {isSignup && (

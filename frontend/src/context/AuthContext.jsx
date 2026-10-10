@@ -38,13 +38,28 @@ export function AuthProvider({ children }) {
     return user;
   }, []);
 
+  // OAuth: the backend already issued our own JWT and redirected here with it.
+  // Store it, then load the user so the rest of the app behaves exactly as
+  // it does after a normal login.
+  const loginWithToken = useCallback(async (token) => {
+    localStorage.setItem('flowengine_token', token);
+    try {
+      const me = await fetchCurrentUser();
+      setUser(me);
+      return me;
+    } catch (err) {
+      localStorage.removeItem('flowengine_token');
+      throw err;
+    }
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.removeItem('flowengine_token');
     setUser(null);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, loginWithToken, logout }}>
       {children}
     </AuthContext.Provider>
   );

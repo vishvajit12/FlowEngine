@@ -4,10 +4,7 @@ const User = require('../models/User');
 const ApiError = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
 const config = require('../config/env');
-
-function signToken(userId) {
-  return jwt.sign({ userId }, config.jwt.secret, { expiresIn: config.jwt.expiresIn });
-}
+const signToken = require('../utils/signToken');
 
 const register = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
