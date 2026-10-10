@@ -11,13 +11,16 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
-    passwordHash: { type: String, required: true },
+    passwordHash: { type: String, required: function () { return !this.googleId && !this.githubId; } },
+googleId: { type: String, unique: true, sparse: true },
+githubId: { type: String, unique: true, sparse: true },
   },
   { timestamps: true }
 );
 
-userSchema.methods.comparePassword = function (candidatePassword) {
-  return bcrypt.compare(candidatePassword, this.passwordHash);
+userSchema.methods.comparePassword = function (candidate) {
+  if (!this.passwordHash) return Promise.resolve(false);
+  return bcrypt.compare(candidate, this.passwordHash);
 };
 
 module.exports = mongoose.model('User', userSchema);
