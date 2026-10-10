@@ -11,13 +11,13 @@ export default function AppShell({ children, contentClassName = 'p-9' }) {
   return (
     <div className="grid grid-cols-[222px_1fr] min-h-screen">
       <aside className="bg-sidebar border-r border-white/[0.07] p-3 flex flex-col gap-0.5">
-        <div className="px-2 pt-1 pb-5">
-          <img
-            src="/logo-navbar.png"
-            alt="FlowEngine"
-            className="block h-9 w-auto max-w-full object-contain"
-          />
-        </div>
+        <div className="flex items-center gap-2.5 px-2 pt-1 pb-5">
+  <img src="/logo-navbar.png" alt="" className="h-10 w-auto object-contain shrink-0" />
+  <div>
+    <div className="text-white font-display font-bold text-[17px] leading-tight">FlowEngine</div>
+    <div className="text-teal text-[10px] font-mono uppercase tracking-wide opacity-90">Automation Engine</div>
+  </div>
+</div>
 
         {NAV_ITEMS.map((item) => (
           <NavLink

@@ -41,17 +41,17 @@ export default function AuthForm({ mode }) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 min-h-screen">
-      <div className="hidden md:flex flex-col justify-center px-16 bg-gradient-to-br from-ink to-[#2b2b29] text-card">
-        <img
-          src="/logo-login.png"
-          alt="FlowEngine"
-          className="h-12 w-auto max-w-[260px] object-contain self-start mb-8"
-        />
-        <h2 className="font-display text-[34px] leading-tight mb-4 max-w-[380px]">Automation that survives the real world.</h2>
-        <p className="text-sage/75 max-w-[360px] leading-relaxed text-[14.5px]">
-          Durable execution, event sourcing, and replay — built into the automation engine, not bolted on.
-        </p>
-      </div>
+     
+
+<div className="hidden md:flex flex-col justify-center items-center px-16 bg-[#F4F7FF]">
+  <img
+    src="/logo-login.png"
+    alt="FlowEngine"
+    className="w-full max-w-[460px] h-auto object-contain"
+  />
+</div>
+
+
 
       <div className="flex flex-col justify-center px-8 md:px-16 max-w-[440px] mx-auto w-full">
         <div className="flex gap-1 bg-ink/[0.08] rounded-full p-1 mb-8 w-fit">
