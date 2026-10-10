@@ -26,6 +26,7 @@ export default function App() {
           <Route path="/executions" element={<ProtectedRoute><ExecutionsList /></ProtectedRoute>} />
           <Route path="/executions/:id" element={<ProtectedRoute><ExecutionDetail /></ProtectedRoute>} />
           <Route path="/credentials" element={<ProtectedRoute><Credentials /></ProtectedRoute>} />
+          <Route path="/oauth/callback" element={<OAuthCallback />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
