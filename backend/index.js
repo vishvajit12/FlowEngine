@@ -25,6 +25,8 @@ const httpServer = http.createServer(app); // Socket.io needs the raw http.Serve
 app.use(helmet());
 app.use(cors()); // dev-permissive; restrict `origin` to your real frontend URL before deploying
 app.use(express.json());
+const cookieParser = require('cookie-parser'); // put the require with the others at the top
+app.use(cookieParser());
 
 // Rate limiting only on auth -- this is the one surface a real attacker
 // actually hits repeatedly (credential stuffing, brute force). The rest
