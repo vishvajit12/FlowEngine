@@ -34,7 +34,6 @@ export const NODE_TYPES = {
       { key: 'model', label: 'Model', type: 'select', options: ['GPT-4o (OpenAI)', 'gemini-3.6-flash', 'Claude Sonnet'] },
       { key: 'credentialId', label: 'Credential', type: 'credential', provider: null }, // populated from live vault
       { key: 'prompt', label: 'System Prompt', type: 'textarea', placeholder: 'You are an expert data analyst...' },
-      { key: 'temperature', label: 'Temperature', type: 'range' },
     ],
     summary: (v) => v.model || 'Not configured',
   },

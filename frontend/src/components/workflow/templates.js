@@ -14,7 +14,6 @@ export const TEMPLATES = {
       node('n2', 'aitask', 420, 150, 'Analyze Lead Data', {
         model: 'GPT-4o (OpenAI)',
         prompt: 'You are an expert data analyst...',
-        temperature: '0.7',
       }),
     ],
     edges: [{ id: 'e1', source: 'n1', target: 'n2' }],
@@ -29,7 +28,6 @@ export const TEMPLATES = {
       node('n4', 'aitask', 320, 260, 'AI Analysis', {
         model: 'gemini-3.6-flash',
         prompt: "Analyze this repository's architecture...",
-        temperature: '0.4',
       }),
       node('n5', 'pdf', 600, 260, 'Generate PDF', { template: 'Architecture Summary' }),
       node('n6', 'email', 880, 260, 'Send Email', { to: 'vishvajit6264@gmail.com', subject: 'Your repository analysis is ready' }),
@@ -50,7 +48,6 @@ export const TEMPLATES = {
       node('n2', 'aitask', 320, 120, 'AI Improvement', {
         model: 'GPT-4o (OpenAI)',
         prompt: 'Improve and format this resume...',
-        temperature: '0.5',
       }),
       node('n3', 'pdf', 600, 120, 'Generate PDF', { template: 'Resume' }),
     ],
