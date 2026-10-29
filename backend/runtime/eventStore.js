@@ -2,19 +2,13 @@ const WorkflowExecution = require('../models/WorkflowExecution');
 
 /**
  * The only place in the codebase that writes to WorkflowExecution.events.
- * Everything else (Runtime Engine now, Replay Engine in Phase 6) goes
- * through this module rather than pushing to the array directly.
+ * Everything else (Runtime Engine, Replay Engine) goes through this module
+ * rather than pushing to the array directly.
  *
- * Uses an atomic $push via findByIdAndUpdate rather than the more
- * obvious "fetch execution, push to array in JS, .save()" pattern.
- * That fetch-modify-save shape has a real race condition: if two
- * events for the same execution get appended close together, the
- * second .save() can overwrite the first's change if it read the
- * document before the first write landed -- silently dropping an
- * event. For a system whose entire thesis is "never lose an event,"
- * a naive implementation of the event store itself would be a
- * contradiction. $push is a single atomic Mongo operation, so this
- * can't happen.
+ * Uses an atomic $push via findByIdAndUpdate rather than the "fetch execution,
+ * push to array in JS, .save()" pattern, which has a race: two events appended
+ * close together can overwrite each other. $push is a single atomic Mongo
+ * operation, so that can't happen.
  */
 async function append(executionId, type, payload = {}, nodeId = null) {
   const event = { type, nodeId, payload, timestamp: new Date() };
@@ -32,6 +26,23 @@ async function append(executionId, type, payload = {}, nodeId = null) {
   return event;
 }
 
+/**
+ * Appends only if no event of this type exists yet for this node. Atomic, so two
+ * API processes (or Replay racing QueueEvents) can't both record the same completion.
+ * Returns the event, or null if it was already recorded.
+ */
+async function appendOnce(executionId, type, payload = {}, nodeId = null) {
+  const event = { type, nodeId, payload, timestamp: new Date() };
+
+  const updated = await WorkflowExecution.findOneAndUpdate(
+    { _id: executionId, events: { $not: { $elemMatch: { type, nodeId } } } },
+    { $push: { events: event } },
+    { new: true }
+  );
+
+  return updated ? event : null;
+}
+
 async function getEvents(executionId) {
   const execution = await WorkflowExecution.findById(executionId).select('events');
   if (!execution) {
@@ -40,4 +51,4 @@ async function getEvents(executionId) {
   return execution.events;
 }
 
-module.exports = { append, getEvents };
+module.exports = { append, appendOnce, getEvents };

@@ -36,8 +36,13 @@ async function recoverUnfinishedExecutions() {
 
   console.log(`[ReplayEngine] Found ${unfinished.length} unfinished execution(s) — reconciling against BullMQ...`);
 
-  for (const execution of unfinished) {
-    await recoverExecution(execution);
+   for (const execution of unfinished) {
+    try {
+      await recoverExecution(execution);
+    } catch (err) {
+      // One bad execution must never block recovery of the others.
+      console.error(`[ReplayEngine] Failed to recover execution ${execution._id}:`, err);
+    }
   }
 }
 

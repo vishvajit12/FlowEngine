@@ -5,6 +5,7 @@ const http = require('http');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 
 const config = require('./config/env');
 const connectDB = require('./config/database');
@@ -25,7 +26,6 @@ const httpServer = http.createServer(app); // Socket.io needs the raw http.Serve
 app.use(helmet());
 app.use(cors()); // dev-permissive; restrict `origin` to your real frontend URL before deploying
 app.use(express.json());
-const cookieParser = require('cookie-parser'); // put the require with the others at the top
 app.use(cookieParser());
 
 // Rate limiting only on auth -- this is the one surface a real attacker
@@ -57,11 +57,26 @@ async function startServer() {
 
   // Runs on every startup, not just after a real crash -- see
   // runtime/replay.js for why that's the correct, safe default.
-  await recoverUnfinishedExecutions();
+  try {
+    await recoverUnfinishedExecutions();
+  } catch (err) {
+    console.error('[ReplayEngine] Startup recovery failed (API will still start):', err);
+  }
+
+  httpServer.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`Port ${config.port} is already in use. Another API instance is running; stop it first.`);
+      process.exit(1);
+    }
+    throw err;
+  });
 
   httpServer.listen(config.port, () => {
     console.log(`🚀 FlowEngine API running on port ${config.port}`);
   });
 }
 
-startServer();
+startServer().catch((err) => {
+  console.error('Fatal startup error:', err);
+  process.exit(1);
+});
