@@ -118,49 +118,54 @@ class RuntimeEngine {
     );
   }
 
-
   async handleNodeCompleted(jobId, result) {
     const job = await Job.fromId(stepQueue, jobId);
     if (!job) return; // job data already cleaned up -- nothing to correlate against
     const { executionId, nodeId, isReplay } = job.data;
 
-    await eventStore.append(executionId, 'NodeCompleted', result, nodeId);
-
     if (isReplay) {
-      // Node Replay is deliberately isolated: it re-runs one already-
-      // completed node for inspection/comparison and appends a fresh
-      // NodeCompleted event for it, but does NOT touch currentNodeId
-      // or advance the chain. The event log now has two NodeCompleted
-      // entries for this nodeId -- both stay in history; nothing was
-      // overwritten. Whichever reads this log later (state
-      // reconstruction, the UI) sees the latest as "current" while the
-      // original is still there if you look at the raw event list.
+      // Isolated node replay: appends a fresh event, never touches the chain.
+      await eventStore.append(executionId, 'NodeCompleted', result, nodeId);
       console.log(`[RuntimeEngine] Execution ${executionId}: node ${nodeId} replayed (isolated, chain unaffected).`);
       getIO().to(executionId).emit('node:completed', { executionId, nodeId, result, isReplay: true });
       return;
     }
 
-    getIO().to(executionId).emit('node:completed', { executionId, nodeId, result });
+    // Idempotent: a second API instance or Replay may have recorded this already.
+    const recorded = await eventStore.appendOnce(executionId, 'NodeCompleted', result, nodeId);
+    if (recorded) getIO().to(executionId).emit('node:completed', { executionId, nodeId, result });
 
+    await this.advanceFrom(executionId, nodeId, result);
+  }
+
+  /**
+   * Moves the chain forward once nodeId's completion is on record. Each step
+   * is an atomic "claim" (the update only matches while the execution is still
+   * RUNNING on nodeId), so concurrent handlers can't both advance it.
+   */
+  async advanceFrom(executionId, nodeId, result) {
     const execution = await WorkflowExecution.findById(executionId).populate('workflowDefinitionId');
-    if (!execution) return;
-    const definition = execution.workflowDefinitionId;
+    if (!execution || execution.status !== 'RUNNING' || execution.currentNodeId !== nodeId) return;
 
+    const definition = execution.workflowDefinitionId;
     const nextNode = getNextNode(definition.nodes, definition.edges, nodeId);
+    const claim = { _id: executionId, status: 'RUNNING', currentNodeId: nodeId };
 
     if (!nextNode) {
-      execution.status = 'COMPLETED';
-      execution.completedAt = new Date();
-      execution.currentNodeId = null;
-      await execution.save();
+      const finished = await WorkflowExecution.findOneAndUpdate(claim, {
+        status: 'COMPLETED',
+        completedAt: new Date(),
+        currentNodeId: null,
+      });
+      if (!finished) return; // another handler already completed it
       await eventStore.append(executionId, 'WorkflowCompleted', {});
       getIO().to(executionId).emit('execution:completed', { executionId });
       console.log(`[RuntimeEngine] Execution ${executionId} completed.`);
       return;
     }
 
-    execution.currentNodeId = nextNode.id;
-    await execution.save();
+    const claimed = await WorkflowExecution.findOneAndUpdate(claim, { currentNodeId: nextNode.id });
+    if (!claimed) return; // another handler already advanced it
     await this.queueNode(executionId, execution.userId, nextNode, result);
   }
 
